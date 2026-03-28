@@ -17,7 +17,7 @@ func NewDBManager() *DBManager {
 	dbName := os.Getenv("DB_NAME")
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
-	pool, err := pgxpool.New(context.Background(), fmt.Sprintf("postgres://%s:%s@localhost:5432/%s", dbUser, dbPassword, dbName))
+	pool, err := pgxpool.New(context.Background(), fmt.Sprintf("postgres://%s:%s@db:5432/%s", dbUser, dbPassword, dbName))
 	if err != nil {
 
 	}

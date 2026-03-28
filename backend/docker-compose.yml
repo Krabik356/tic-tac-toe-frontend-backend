@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    container_name: "postgresDB"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./db.sql:/docker-entrypoint-initdb.d/db.sql
+
+  server:
+    build: .
+    ports:
+      - "8080:8080"
+    container_name: "server"
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    depends_on:
+      - db
