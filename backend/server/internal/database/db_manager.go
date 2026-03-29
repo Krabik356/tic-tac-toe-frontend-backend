@@ -3,9 +3,11 @@ package database
 import (
 	"backend/server/internal/logic"
 	"context"
+	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"os"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DBManager struct {
@@ -27,7 +29,7 @@ func NewDBManager() *DBManager {
 }
 
 func (dbM *DBManager) Register(regData logic.RegisterData) error {
-	_, err := dbM.Pool.Exec(context.Background(), "INSERT INTO users(name, password, rank) VALUES($1, $2, $3)", regData.Name, regData.Password, 0)
+	_, err := dbM.Pool.Exec(context.Background(), "INSERT INTO users(name, password, rank, session_token) VALUES($1, $2, $3, $4)", regData.Name, regData.Password, regData.Token, 0)
 	return err
 }
 
@@ -38,6 +40,35 @@ func (dbM *DBManager) Login(regData logic.RegisterData) (bool, int, error) {
 	)
 	err := dbM.Pool.QueryRow(context.Background(), "SELECT 1, rank FROM users WHERE name=$1 AND password=$2", regData.Name, regData.Password).Scan(&isCorrect, &rank)
 	return isCorrect, rank, err
+}
+
+func (dbM *DBManager) SetInfo(name string, info []string, what []string) error {
+	if len(info) != len(what) {
+		return errors.New("Info != what")
+	}
+
+	tx, err := dbM.Pool.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(context.Background())
+	for id, which := range info {
+		command := fmt.Sprintf("UPDATE users SET %s=$2 WHERE name=$3", which)
+		_, err := tx.Exec(context.Background(), command, what[id], name)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(context.Background())
+}
+
+func (dbM *DBManager) CheckToken(token string) (bool, error) {
+	var isCorrect bool
+
+	err := dbM.Pool.QueryRow(context.Background(), "SELECT 1 FROM users WHERE session_token=$1", token).Scan(&isCorrect)
+
+	return isCorrect, err
 }
 
 func (dbM *DBManager) GetLeaderBoard() (logic.LeaderBoard, error) {

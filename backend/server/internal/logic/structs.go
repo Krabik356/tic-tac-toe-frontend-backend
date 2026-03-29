@@ -3,6 +3,7 @@ package logic
 type RegisterData struct {
 	Name     string `json:"name"`
 	Password string `json:"password"`
+	Token    string `json:"-"`
 }
 
 type UnRegisterData struct {
