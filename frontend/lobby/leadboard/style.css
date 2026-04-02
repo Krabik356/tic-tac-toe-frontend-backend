@@ -1,0 +1,38 @@
+body {
+
+    overflow: hidden;
+    background-color: black;
+
+    background-image:
+        linear-gradient(to right, #222 1px, transparent 1px),
+        linear-gradient(to bottom, #222 1px, transparent 1px);
+
+    background-size: 30px 30px;
+    margin: auto;
+    text-align: center;
+}
+h1{
+    color: #b100ff;
+    font-family:Times New Roman, serif;
+    font-size: 50px;
+}
+.field-list {
+    width: 50%;
+    height: 300px;
+    margin: 0 auto;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    color:white;
+
+}
+.field-list li {
+    color: white;
+    display: flex;
+    justify-content: space-around;
+    font-size: 25px;
+}
+.field-list li span {
+    flex: 1;
+    text-align: center;
+
+}
