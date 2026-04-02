@@ -3,15 +3,22 @@ package logic
 import (
 	"encoding/json"
 	"net/http"
-	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type Handler struct {
+	upgrade *websocket.Upgrader
 	manager *Manager
 }
 
 func NewHandler(m *Manager) *Handler {
 	return &Handler{
+		upgrade: &websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return r.Header.Get("Origin") == "http://localhost:7010"
+			},
+		},
 		manager: m,
 	}
 }
@@ -30,20 +37,13 @@ func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.manager.GenerateToken(regData.Name)
+	token, tokenTime, err := h.manager.GenerateToken(regData.Name, false)
 	if err != nil {
 		http.Error(w, "Servers error, problem with generating tocken", 500)
 		return
 	}
 	regData.Token = token
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_tocken",
-		Value:    token,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   false,
-		Expires:  time.Now().Add(3 * 24 * time.Hour),
-	})
+	regData.TokenTime = tokenTime
 	err = h.manager.RegisterUser(regData)
 	if err != nil {
 		http.Error(w, "Servers error", 500)
@@ -55,10 +55,12 @@ func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(SuccessfulRegistartion{
 		Status: "success",
 		Name:   regData.Name,
+		Token:  token,
 	})
 }
 
 func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only post method", 405)
 		return
@@ -78,25 +80,18 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isLogined {
-		token, err := h.manager.GenerateToken(regData.Name)
+		token, _, err := h.manager.GenerateToken(regData.Name, true)
 		if err != nil {
 			http.Error(w, "Servers error, problem with generating tocken", 500)
 			return
 		}
-		http.SetCookie(w, &http.Cookie{
-			Name:     "session_tocken",
-			Value:    token,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   false,
-			Expires:  time.Now().Add(3 * 24 * time.Hour),
-		})
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
 		json.NewEncoder(w).Encode(SuccessfulLogin{
 			Status: "success",
 			Name:   regData.Name,
 			Rank:   rank,
+			Token:  token,
 		})
 	} else {
 		http.Error(w, "Invalid username or password", 401)
@@ -105,25 +100,25 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetLBHandler(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Only get method", 405)
+		http.Error(w, "Only post method", 405)
 		return
 	}
 
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		http.Error(w, "Unsended cookies", 400)
+	token := r.Header.Get("session_token")
+	if token == "" {
+		http.Error(w, "Unauthorized", 401)
 		return
 	}
 
-	token := cookie.Value
 	isCorrect, err := h.manager.CheckToken(token)
 	if err != nil {
 		http.Error(w, "Servers error", 500)
 		return
 	}
 	if !isCorrect {
-		http.Error(w, "There is not user with this token", 401)
+		http.Error(w, "Unauthorized", 401)
 		return
 	}
 
@@ -139,4 +134,94 @@ func (h *Handler) GetLBHandler(w http.ResponseWriter, r *http.Request) {
 		Status: "success",
 		LB:     leaderBoard,
 	})
+}
+
+func (h *Handler) GameWS(w http.ResponseWriter, r *http.Request) {
+
+	token := r.Header.Get("session_token")
+	if token == "" {
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
+
+	isCorrect, err := h.manager.CheckToken(token)
+	if err != nil {
+		http.Error(w, "Servers error", 500)
+		return
+	}
+	if !isCorrect {
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
+
+	name, err := h.manager.Authorize(token)
+	if err != nil {
+		http.Error(w, "Servers problem", 500)
+		return
+	}
+
+	conn, err := h.upgrade.Upgrade(w, r, nil)
+	if err != nil {
+		http.Error(w, "Servers problem", 500)
+		return
+	}
+
+	client := NewClient(name, conn)
+	h.manager.JoinChan <- client
+
+	go func() {
+		defer client.Conn.Close()
+
+		for msg := range client.Send {
+			err := client.Conn.WriteJSON(msg)
+			if err != nil {
+				if ch := client.RoomChan; ch != nil {
+					select {
+					case ch <- ClientDisconect{
+						Status: "disconected",
+						Client: client,
+					}:
+					default:
+					}
+				}
+				return
+			}
+		}
+	}()
+
+	go func() {
+		defer client.Conn.Close()
+		for {
+			var move Movement
+			err := client.Conn.ReadJSON(&move)
+			if err != nil {
+				if ch := client.RoomChan; ch != nil {
+					select {
+					case ch <- ClientDisconect{
+						Status: "disconected",
+						Client: client,
+					}:
+					default:
+					}
+				}
+				return
+			}
+			if ch := client.RoomChan; ch != nil {
+				select {
+				case ch <- RoomsMovement{
+					Client: client,
+					X:      move.X,
+					Y:      move.Y,
+				}:
+				default:
+					ch <- ClientDisconect{
+						Status: "disconected",
+						Client: client,
+					}
+				}
+			} else {
+				return
+			}
+		}
+	}()
 }

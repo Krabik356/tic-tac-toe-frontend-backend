@@ -3,7 +3,6 @@ package database
 import (
 	"backend/server/internal/logic"
 	"context"
-	"errors"
 	"fmt"
 	"os"
 
@@ -29,7 +28,7 @@ func NewDBManager() *DBManager {
 }
 
 func (dbM *DBManager) Register(regData logic.RegisterData) error {
-	_, err := dbM.Pool.Exec(context.Background(), "INSERT INTO users(name, password, rank, session_token) VALUES($1, $2, $3, $4)", regData.Name, regData.Password, regData.Token, 0)
+	_, err := dbM.Pool.Exec(context.Background(), "INSERT INTO users(name, password, session_token, token_time, rank) VALUES($1, $2, $3, $4, $5)", regData.Name, regData.Password, regData.Token, regData.TokenTime, 0)
 	return err
 }
 
@@ -42,33 +41,45 @@ func (dbM *DBManager) Login(regData logic.RegisterData) (bool, int, error) {
 	return isCorrect, rank, err
 }
 
-func (dbM *DBManager) SetInfo(name string, info []string, what []string) error {
-	if len(info) != len(what) {
-		return errors.New("Info != what")
-	}
+func (dbM *DBManager) SetToken(name string, token string, tokenTime string) error {
+	_, err := dbM.Pool.Exec(context.Background(), "UPDATE users SET session_token=$1, token_time=$2, WHERE name=$3", token, tokenTime, name)
+	return err
+}
 
+func (dbM *DBManager) GetName(token string) (string, error) {
+	var name string
+	err := dbM.Pool.QueryRow(context.Background(), "SELECT name FROM users WHERE session_token=$1", token).Scan(&name)
+	return name, err
+}
+
+func (dbM *DBManager) CheckToken(token string) (bool, string, error) {
+	var (
+		isCorrect bool
+		tokenTime string
+	)
+
+	err := dbM.Pool.QueryRow(context.Background(), "SELECT 1, token_time FROM users WHERE session_token=$1", token).Scan(&isCorrect, &tokenTime)
+
+	return isCorrect, tokenTime, err
+}
+
+func (dbM *DBManager) Retribution(name1, name2 string, amount1, amount2 int) error {
 	tx, err := dbM.Pool.Begin(context.Background())
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(context.Background())
-	for id, which := range info {
-		command := fmt.Sprintf("UPDATE users SET %s=$2 WHERE name=$3", which)
-		_, err := tx.Exec(context.Background(), command, what[id], name)
-		if err != nil {
-			return err
-		}
+
+	_, err = tx.Exec(context.Background(), "UPDATE users SET rank=rank+$2 WHERE name=$1", name1, amount1)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(context.Background(), "UPDATE users SET rank=rank+$2 WHERE name=$1", name2, amount2)
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit(context.Background())
-}
-
-func (dbM *DBManager) CheckToken(token string) (bool, error) {
-	var isCorrect bool
-
-	err := dbM.Pool.QueryRow(context.Background(), "SELECT 1 FROM users WHERE session_token=$1", token).Scan(&isCorrect)
-
-	return isCorrect, err
 }
 
 func (dbM *DBManager) GetLeaderBoard() (logic.LeaderBoard, error) {
