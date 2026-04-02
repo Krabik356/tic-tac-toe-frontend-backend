@@ -3,6 +3,7 @@ package logic
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"log"
 	"time"
 )
 
@@ -42,11 +43,16 @@ func NewManager(dbM interface {
 
 func (m *Manager) RegisterUser(data RegisterData) error {
 	err := m.DataBase.Register(data)
+	log.Println(err)
+
 	return err
 }
 
 func (m *Manager) LoginUser(data RegisterData) (bool, int, error) {
 	isLogined, rank, err := m.DataBase.Login(data)
+	log.Println(isLogined)
+	log.Println(rank)
+	log.Println(err)
 	return isLogined, rank, err
 }
 

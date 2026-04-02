@@ -2,6 +2,7 @@ package logic
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -27,6 +28,7 @@ func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only post method", 405)
+		log.Println("Only post method")
 		return
 	}
 
@@ -34,19 +36,29 @@ func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&regData)
 	if err != nil {
 		http.Error(w, "Invalid data", 400)
+		log.Println("Invalid data")
+
 		return
 	}
+	log.Println(regData)
 
 	token, tokenTime, err := h.manager.GenerateToken(regData.Name, false)
 	if err != nil {
 		http.Error(w, "Servers error, problem with generating tocken", 500)
+		log.Println("Servers error, problem with generating tocken")
+
 		return
 	}
 	regData.Token = token
 	regData.TokenTime = tokenTime
+	log.Println(token)
+	log.Println(tokenTime)
+	log.Println(regData)
+
 	err = h.manager.RegisterUser(regData)
 	if err != nil {
 		http.Error(w, "Servers error", 500)
+		log.Println("Servers error")
 		return
 	}
 
@@ -57,12 +69,16 @@ func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		Name:   regData.Name,
 		Token:  token,
 	})
+	log.Println("success")
+
 }
 
 func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only post method", 405)
+		log.Println("Only post method")
+
 		return
 	}
 
@@ -70,12 +86,17 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&regData)
 	if err != nil {
 		http.Error(w, "Invalid data", 400)
+		log.Println("Invalid data")
+
 		return
 	}
+	log.Println(regData)
 
 	isLogined, rank, err := h.manager.LoginUser(regData)
 	if err != nil {
 		http.Error(w, "Servers error", 500)
+		log.Println("Servers error")
+
 		return
 	}
 
@@ -83,6 +104,9 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		token, _, err := h.manager.GenerateToken(regData.Name, true)
 		if err != nil {
 			http.Error(w, "Servers error, problem with generating tocken", 500)
+			log.Println("Servers error, problem with generating tocken")
+			log.Println(err)
+
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -93,38 +117,53 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 			Rank:   rank,
 			Token:  token,
 		})
+		log.Println("success")
 	} else {
 		http.Error(w, "Invalid username or password", 401)
+		log.Println("Invalid username or password")
+
 		return
 	}
+
 }
 
 func (h *Handler) GetLBHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
-		http.Error(w, "Only post method", 405)
+		http.Error(w, "Only get method", 405)
+		log.Println("Only get method")
+
 		return
 	}
 
 	token := r.Header.Get("session_token")
 	if token == "" {
 		http.Error(w, "Unauthorized", 401)
+		log.Println("Unauthorized1")
+
 		return
 	}
 
 	isCorrect, err := h.manager.CheckToken(token)
 	if err != nil {
 		http.Error(w, "Servers error", 500)
+		log.Println("Servers error1")
+		log.Println(err)
+
 		return
 	}
 	if !isCorrect {
 		http.Error(w, "Unauthorized", 401)
+		log.Println("Unauthorized2")
+
 		return
 	}
 
 	leaderBoard, err := h.manager.GetLeaderBoard()
 	if err != nil {
 		http.Error(w, "Servers error", 500)
+		log.Println("Servers error2")
+
 		return
 	}
 
@@ -134,6 +173,11 @@ func (h *Handler) GetLBHandler(w http.ResponseWriter, r *http.Request) {
 		Status: "success",
 		LB:     leaderBoard,
 	})
+	log.Println(SuccessfulLeaderBoard{
+		Status: "success",
+		LB:     leaderBoard,
+	})
+
 }
 
 func (h *Handler) GameWS(w http.ResponseWriter, r *http.Request) {

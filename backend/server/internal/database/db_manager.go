@@ -4,6 +4,7 @@ import (
 	"backend/server/internal/logic"
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -37,12 +38,12 @@ func (dbM *DBManager) Login(regData logic.RegisterData) (bool, int, error) {
 		isCorrect bool
 		rank      int
 	)
-	err := dbM.Pool.QueryRow(context.Background(), "SELECT 1, rank FROM users WHERE name=$1 AND password=$2", regData.Name, regData.Password).Scan(&isCorrect, &rank)
+	err := dbM.Pool.QueryRow(context.Background(), "SELECT TRUE, rank FROM users WHERE name=$1 AND password=$2", regData.Name, regData.Password).Scan(&isCorrect, &rank)
 	return isCorrect, rank, err
 }
 
 func (dbM *DBManager) SetToken(name string, token string, tokenTime string) error {
-	_, err := dbM.Pool.Exec(context.Background(), "UPDATE users SET session_token=$1, token_time=$2, WHERE name=$3", token, tokenTime, name)
+	_, err := dbM.Pool.Exec(context.Background(), "UPDATE users SET session_token=$1, token_time=$2 WHERE name=$3", token, tokenTime, name)
 	return err
 }
 
@@ -57,8 +58,8 @@ func (dbM *DBManager) CheckToken(token string) (bool, string, error) {
 		isCorrect bool
 		tokenTime string
 	)
-
-	err := dbM.Pool.QueryRow(context.Background(), "SELECT 1, token_time FROM users WHERE session_token=$1", token).Scan(&isCorrect, &tokenTime)
+	log.Println(token)
+	err := dbM.Pool.QueryRow(context.Background(), "SELECT TRUE, token_time FROM users WHERE session_token=$1", token).Scan(&isCorrect, &tokenTime)
 
 	return isCorrect, tokenTime, err
 }
