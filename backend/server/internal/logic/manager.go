@@ -3,8 +3,11 @@ package logic
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"log"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type Manager struct {
@@ -20,6 +23,7 @@ type Manager struct {
 		CheckToken(string) (bool, string, error)
 		GetName(string) (string, error)
 		Retribution(string, string, int, int) error
+		CheckName(string) error
 	}
 }
 
@@ -31,6 +35,7 @@ func NewManager(dbM interface {
 	CheckToken(string) (bool, string, error)
 	GetName(string) (string, error)
 	Retribution(string, string, int, int) error
+	CheckName(string) error
 }) *Manager {
 	return &Manager{
 		rooms:      make(map[int]*Room),
@@ -48,11 +53,26 @@ func (m *Manager) RegisterUser(data RegisterData) error {
 	return err
 }
 
+func (m *Manager) IsThereThisName(name string) (bool, error) {
+	err := m.DataBase.CheckName(name)
+	log.Println(err)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func (m *Manager) LoginUser(data RegisterData) (bool, int, error) {
 	isLogined, rank, err := m.DataBase.Login(data)
 	log.Println(isLogined)
 	log.Println(rank)
 	log.Println(err)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, 0, nil
+	}
 	return isLogined, rank, err
 }
 

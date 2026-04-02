@@ -53,6 +53,12 @@ func (dbM *DBManager) GetName(token string) (string, error) {
 	return name, err
 }
 
+func (dbM *DBManager) CheckName(name string) error {
+	var isExist bool
+	err := dbM.Pool.QueryRow(context.Background(), "SELECT TRUE FROM users WHERE name=$1", name).Scan(&isExist)
+	return err
+}
+
 func (dbM *DBManager) CheckToken(token string) (bool, string, error) {
 	var (
 		isCorrect bool

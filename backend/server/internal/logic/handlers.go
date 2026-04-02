@@ -42,6 +42,20 @@ func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println(regData)
 
+	isExists, err := h.manager.IsThereThisName(regData.Name)
+	if err != nil {
+		http.Error(w, "Servers error", 500)
+		log.Println("Servers error")
+
+		return
+	}
+	if isExists {
+		http.Error(w, "User already exists", 409)
+		log.Println("User already exists")
+
+		return
+	}
+
 	token, tokenTime, err := h.manager.GenerateToken(regData.Name, false)
 	if err != nil {
 		http.Error(w, "Servers error, problem with generating tocken", 500)
