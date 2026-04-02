@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <canvas id="game"></canvas>
+    <meta charset="UTF-8">
+    <title>Tic Tak Toe</title>
+     <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="registration_window" style="display: block;">
+        <h1>Tic Tak Toe</h1>
+        <div id="registration_form">
+            <input type="text" id="regname" placeholder="Enter your name">
+            <p></p>
+            <input type="password" id="regpassword" placeholder="Enter your password">
+            <p id="password_error" style="color: red; display: none;">
+                Пароль має містити хоча б одну букву
+            </p>
+            <p></p>
+            <input type="password" id="check the password" placeholder="Enter password again">
+            <p></p>
+            <button id="register_button">Register</button>
+            <p></p>
+            <button id="change_window_button">Log in</button>
+        </div>
+    </div>
+    <div id="login_window" style="display: none;">
+        <h1>Tic Tak Toe</h1>
+        <div id="login_form">
+            <input type="text" id="name" placeholder="Enter your name">
+            <p></p>
+            <input type="password" id="password" placeholder="Enter your password">
+            <p></p>
+
+            <button id="log_button">Log in</button>
+            <p></p>
+            <button id="change_window_button2">Does not have account?</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
