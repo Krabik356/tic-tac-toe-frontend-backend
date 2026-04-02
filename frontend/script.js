@@ -14,7 +14,11 @@ const input_password = document.getElementById('password')
 //Кнопки реєстації логіну
 const but_reg = document.getElementById('register_button')
 const but_login = document.getElementById('log_button')
+let token = localStorage.getItem('token')
+if (token!=null) {
+        window.location.href = "http://localhost:7010/lobby";
 
+    }
 //кусок для зміни регістраці(логіну)----------------------------
 const change_window = () => {
     if (regWindow.style.display === 'none') {

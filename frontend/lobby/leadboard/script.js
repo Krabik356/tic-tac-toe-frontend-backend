@@ -1,3 +1,8 @@
+let token = localStorage.getItem('token')
+if (token==null) {
+        window.location.href = "http://localhost:7010";
+
+    }
 async function loadLeaders() {
     try {
         const token = localStorage.getItem('token');
