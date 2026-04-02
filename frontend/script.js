@@ -87,10 +87,16 @@ const register = async () => {
     // Теперь можно сохранять данные в переменную
     const userName = data.name;
     const Token = data.token;
+    const status=data.status;
     localStorage.setItem('token', Token);
     localStorage.setItem('userName', userName);
     console.log("Имя пользователя:", userName);
     console.log("токен:", Token);
+    console.log("статус", status);
+    if (status==='success') {
+        window.location.href = "http://localhost:7010/lobby";
+
+    }
 }
 const login = async () => {
     const loginuser_data = {
@@ -114,10 +120,15 @@ const login = async () => {
 
         const data = await response.json();
         const userName = data.name;
-        const Token = data.Token;
+        const Token = data.token;
+        const status=data.status;
         localStorage.setItem('token', Token);
         localStorage.setItem('userName', userName);
         console.log("Успішний вхід:", data);
+        if (status==='success') {
+            window.location.href = "http://localhost:7010/lobby";
+
+        }
     } catch (err) {
 
         console.error("Помилка запиту:", err);
