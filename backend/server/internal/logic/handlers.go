@@ -150,29 +150,6 @@ func (h *Handler) GetLBHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := r.Header.Get("session_token")
-	if token == "" {
-		http.Error(w, "Unauthorized", 401)
-		log.Println("Unauthorized1")
-
-		return
-	}
-
-	isCorrect, err := h.manager.CheckToken(token)
-	if err != nil {
-		http.Error(w, "Servers error", 500)
-		log.Println("Servers error1")
-		log.Println(err)
-
-		return
-	}
-	if !isCorrect {
-		http.Error(w, "Unauthorized", 401)
-		log.Println("Unauthorized2")
-
-		return
-	}
-
 	leaderBoard, err := h.manager.GetLeaderBoard()
 	if err != nil {
 		http.Error(w, "Servers error", 500)
@@ -197,20 +174,6 @@ func (h *Handler) GetLBHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GameWS(w http.ResponseWriter, r *http.Request) {
 
 	token := r.Header.Get("session_token")
-	if token == "" {
-		http.Error(w, "Unauthorized", 401)
-		return
-	}
-
-	isCorrect, err := h.manager.CheckToken(token)
-	if err != nil {
-		http.Error(w, "Servers error", 500)
-		return
-	}
-	if !isCorrect {
-		http.Error(w, "Unauthorized", 401)
-		return
-	}
 
 	name, err := h.manager.Authorize(token)
 	if err != nil {
