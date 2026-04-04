@@ -1,0 +1,32 @@
+body {
+    margin: auto;
+    overflow: hidden;
+    background-color: black;
+
+    background-image:
+        linear-gradient(to right, #222 1px, transparent 1px),
+        linear-gradient(to bottom, #222 1px, transparent 1px);
+
+    background-size: 30px 30px;
+
+}
+#play, #leadboard, h1, #quit {
+    display: block;
+    width: fit-content;
+    margin: 5px auto;
+
+}
+#play, #leadboard, #quit {
+    margin: 5px auto;
+    background-color: #1d1d5c;
+    border-bottom: 2px solid #aa45da;
+    border-top-color: #162e77;
+    border-left-color: #162e77;
+    color: #adadd6;
+    padding: 6px 20px;
+}
+h1{
+    color: #b100ff;
+    font-family:Times New Roman, serif;
+    font-size: 50px;
+}
