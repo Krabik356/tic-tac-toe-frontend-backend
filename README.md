@@ -1,14 +1,14 @@
 # Онлайн хрестики-нолики 🎮
 
-## Творці 🔨
+### Творці 🔨
 - **Backend** - Krabik356
 - **Frontend** - SerSegeda, vanyalisenko22-art
 
-### Fullstack 🍎
+## Fullstack 🍎
 
 *Текст*
 
-### Backend 💽
+## Backend 💽
 
 **Мова програмування:** Golang 🐹
 
@@ -47,6 +47,6 @@
 - Вперше попрацював з Docker.
 
 
-### Frontend 🖥️
+## Frontend 🖥️
 
 *Текст*
