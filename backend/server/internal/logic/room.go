@@ -49,9 +49,9 @@ func NewRoom(id int, db interface {
 	}
 }
 
-func (r *Room) isCorrectMove(row, col int, who *Client) error {
+func (r *Room) isCorrectMove(row, col int, name string) error {
 	if r.Field[row][col] == "*" {
-		if who == r.Clients[r.Turn] {
+		if name == r.Clients[r.Turn].Name {
 			return nil
 		} else {
 			return errors.New("Not your turn")
@@ -180,7 +180,7 @@ func (r *Room) Run() {
 		switch t := data.(type) {
 		case RoomsMovement:
 			movement := t
-			err := r.isCorrectMove(movement.X, movement.Y, movement.Client)
+			err := r.isCorrectMove(movement.X, movement.Y, movement.Client.Name)
 			if err != nil {
 				movement.Client.Send <- RoomsError{
 					Status: "error",

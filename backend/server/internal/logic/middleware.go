@@ -46,7 +46,8 @@ func (m *Middlewares) MiddlewareWithLoggs(next http.Handler) http.Handler {
 		rand.Read(b)
 		reqId := hex.EncodeToString(b)
 		ctx := context.WithValue(r.Context(), "request_id", reqId)
-
+		r = r.WithContext(ctx)
+		
 		defer func() {
 			code := rW.code
 			if code >= 200 && code <= 299 {
@@ -84,7 +85,7 @@ func (m *Middlewares) MiddlewareWithLoggs(next http.Handler) http.Handler {
 			zap.String("start_time", start.Format(time.RFC3339)),
 		)
 
-		next.ServeHTTP(rW, r.WithContext(ctx))
+		next.ServeHTTP(rW, r)
 	})
 }
 
