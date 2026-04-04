@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -48,14 +47,11 @@ func NewManager(dbM interface {
 
 func (m *Manager) RegisterUser(data RegisterData) error {
 	err := m.DataBase.Register(data)
-	log.Println(err)
-
 	return err
 }
 
 func (m *Manager) IsThereThisName(name string) (bool, error) {
 	err := m.DataBase.CheckName(name)
-	log.Println(err)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return false, nil
@@ -67,9 +63,6 @@ func (m *Manager) IsThereThisName(name string) (bool, error) {
 
 func (m *Manager) LoginUser(data RegisterData) (bool, int, error) {
 	isLogined, rank, err := m.DataBase.Login(data)
-	log.Println(isLogined)
-	log.Println(rank)
-	log.Println(err)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, 0, nil
 	}
