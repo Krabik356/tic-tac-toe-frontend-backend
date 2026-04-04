@@ -4,7 +4,6 @@ import (
 	"backend/server/internal/logic"
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -64,7 +63,6 @@ func (dbM *DBManager) CheckToken(token string) (bool, string, error) {
 		isCorrect bool
 		tokenTime string
 	)
-	log.Println(token)
 	err := dbM.Pool.QueryRow(context.Background(), "SELECT TRUE, token_time FROM users WHERE session_token=$1", token).Scan(&isCorrect, &tokenTime)
 
 	return isCorrect, tokenTime, err
